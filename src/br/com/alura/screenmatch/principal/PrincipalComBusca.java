@@ -7,18 +7,36 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class PrincipalComBusca {
     public static void main(String[] args) throws IOException, InterruptedException {
         Scanner leitura = new Scanner(System.in);
+        String busca = "";
+
+        List<Titulo> titulos = new ArrayList<>();
+
+        Gson gson = new GsonBuilder()
+                .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
+                .setPrettyPrinting()
+                .create();
+
+        while (!busca.equalsIgnoreCase("Sair")) {
+
         System.out.println("Digite um filme para busca: ");
-        var busca = leitura.nextLine();
+        busca = leitura.nextLine();
+
+        if(busca.equalsIgnoreCase("Sair")) {
+            break;
+        }
 
         String endereco = "https://www.omdbapi.com/?t=" + busca.replace(" ", "+") + "&apikey=a9e196a8";
 
@@ -34,16 +52,14 @@ public class PrincipalComBusca {
         String json = response.body();
         System.out.println(response.body());
 
-        Gson gson = new GsonBuilder()
-                .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
-                .create();
-
         TituloOmdb meuTituloOmdb = gson.fromJson(json, TituloOmdb.class);
         System.out.println(meuTituloOmdb);
         try {
             Titulo meuTitulo = new Titulo(meuTituloOmdb);
             System.out.println("Titulo já convertido");
             System.out.println(meuTitulo);
+
+            titulos.add(meuTitulo);
         } catch (NumberFormatException e) {
             System.out.println("Aconteceu um erro: ");
             System.out.println(e.getMessage());
@@ -52,7 +68,11 @@ public class PrincipalComBusca {
         } catch (ErroDeConversaoAnoException e) {
             System.out.println(e.getMessage());
         }
-        System.out.println("O programa finalizou corretamente");
-
     }
+        FileWriter escrita = new FileWriter("filmes.json");
+        escrita.write(gson.toJson(titulos));
+        escrita.close();
+        System.out.println("O programa finalizou corretamente");
 }
+    }
+
